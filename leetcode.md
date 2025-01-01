@@ -36,3 +36,31 @@ class Solution {
     }
 }
 ```
+
+### 128.最长连续序列
+``` java
+class Solution {
+    public int longestConsecutive(int[] nums) {
+        Set<Integer> set = new HashSet<>();
+        int cur = 0, maxLen = 0, ans = 0;
+        // 讲数组中所有元素放入Set中
+        for (int num : nums) {
+            set.add(num);
+        }
+        for (int i : set) {
+            // 检测是否是连续序列的第一个值（最小值），如果是就重新开始计数
+            if (!set.contains(i - 1)) {
+                cur = i;
+                maxLen = 1;
+            }
+            // 如果是连续序列的最小值，则开始往下查找连续多少个
+            while (set.contains(cur + 1)) {
+                maxLen++;
+                cur++;
+            }
+            ans = Math.max(maxLen, ans);
+        }
+        return ans;
+    }
+}
+```
