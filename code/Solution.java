@@ -1,26 +1,15 @@
-import java.util.Stack;
-
 class Solution {
-    public boolean isValid(String s) {
-        int n = s.length();
-        Stack<Character> stack = new Stack<>();
-        for (int i = 0; i < n; i++) {
-            if (s.charAt(i) == '(') {
-                stack.push(')');
-            } 
-            else if (s.charAt(i) == '[') {
-                stack.push('[');
-            }
-            else if (s.charAt(i) == '{') {
-                stack.push('{');
-            }
-            else if (stack.isEmpty() || stack.peek() != s.charAt(i)) {
-                return false;
-            } 
-            else {
-                stack.pop();
-            }
-        }
-        return stack.isEmpty();
+    public TreeNode sortedArrayToBST(int[] nums) {
+        return traversal(nums, 0, nums.length - 1);
+    }
+
+    TreeNode traversal(int[] nums, int left, int right) {
+        if (left > right)
+            return null;
+        int mid = left + (right - left) / 2;
+        TreeNode node = new TreeNode(nums[mid]);
+        node.left = traversal(nums, left, mid - 1);
+        node.right = traversal(nums, mid + 1, right);
+        return node;
     }
 }
