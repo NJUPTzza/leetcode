@@ -1,28 +1,58 @@
 #include <vector>
+#include <string>
 
 using namespace std;
 
 class Solution {
     public:
-    vector<vector<int>> combinationSum(vector<int>& candidates, int target) {
-        vector<vector<int>> ans;
-        vector<int> path;
-        dfs(ans, path, candidates, target, 0, 0);
-        return ans;
-    }
+        string decodeString(string s) {
+            vector<string> stack;
+            size_t ptr = 0;
 
-    void dfs(vector<vector<int>>& ans, vector<int>& path, vector<int>& candidates, int target, int sum, int idx) {
-        if (sum == target) {
-            ans.push_back(path);
-            return;
+            while (ptr < s.size()) {
+                char cur = s[ptr];
+                if (isdigit(cur)) {
+                    // 获取一个数字并进栈
+                    string digits = getDigits(s, ptr);
+                    stack.push_back(digits);
+                } else if (isalpha(cur) || cur == '[') {
+                    // 获取一个字母或者左括号并进栈
+                    stack.push_back(string(1, s[ptr++]));
+                } else {
+                    ptr++;
+                    vector<string> sub;
+                    while (stack.back() != "[") {
+                        sub.push_back(stack.back());
+                        stack.pop_back();
+                    }
+                    reverse(sub.begin(), sub.end());
+                    // 左括号出栈
+                    stack.pop_back();
+                    // 此时栈顶为当前 sub 对应的字符串应该出现的次数
+                    int repTime = stoi(stack.back());
+                    stack.pop_back();
+                    string t, o = getString(sub);
+                    // 构造字符串
+                    while (repTime--) t += o;
+                    // 将构造好的字符串入栈
+                    stack.push_back(t);
+                }
+            }
         }
 
-        for (int i = idx; i < candidates.size(); i++) {
-            if (sum + candidates[i] > target) 
-                break;
-            path.push_back(candidates[i]);
-            dfs(ans, path, candidates, target, sum + candidates[i], i);
-            path.pop_back();
+        string getDigits(string &s, size_t &ptr) {
+            string ret = "";
+            while (isdigit(s[ptr])) {
+                ret.push_back(s[ptr++]);
+            }
+            return ret;
         }
-    }
-};
+
+        string getString(vector<string> &v) {
+            string ret;
+            for (const auto &s: v) {
+                ret += s;
+            }
+            return ret;
+        }
+    };
