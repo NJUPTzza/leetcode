@@ -39,6 +39,22 @@ ON
 ;
 ```
 
+### 1068.产品销售分析 I
+``` sql
+SELECT
+    p.product_name, 
+    s.year,
+    s.price
+FROM
+    Product AS p
+-- JOIN 就是，只展示两个表相互匹配的行，不会出现有一个表没有匹配的行就用NULL来替代
+JOIN
+    Sales AS s
+ON
+    s.product_id = p.product_id
+;
+```
+
 ## 聚合函数
 ### 620.有趣的电影
 ``` sql
@@ -51,6 +67,35 @@ WHERE
     description != 'boring' AND mod(id, 2) = 1
 ORDER BY
     rating DESC
+;
+```
+
+### 1251.平均售价
+``` sql
+SELECT
+    product_id,
+    -- SUM(x) 计算 x 列的总和
+    -- ROUND() 四舍五入到小数点后某位
+    -- IFNULL 检查是否为NULL，是NULL就返回0，不是NULL就返回值
+    IFNULL(ROUND(SUM(sales) / SUM(units), 2), 0) AS average_price
+-- 表一定要有别名 比如这里 FROM() T 这个 T 一定要加
+FROM (
+    SELECT
+        p.product_id AS product_id,
+        p.price * u.units AS sales,
+        u.units AS units
+    FROM    
+        Prices AS p
+    LEFT JOIN
+        UnitsSold AS u 
+    ON
+        p.product_id = u.product_id
+    AND
+        -- 计算时间可以这样，用 BETWEEN AND
+        u.purchase_date BETWEEN p.start_date AND p.end_date
+) T
+GROUP BY
+    product_id
 ;
 ```
 
@@ -67,6 +112,23 @@ FROM
 -- GROUP BY 子句用于将查询结果按照指定的列进行分组
 GROUP BY
     teacher_id
+```
+
+### 1141.查询近30天活跃用户数
+``` sql 
+SELECT
+    activity_date AS day,
+    -- 因为加了 activity_date AS day 和 GROUP BY activity_date 所以COUNT统计的是每天的
+    -- DISTINCT() 去重
+    COUNT(DISTINCT(user_id)) AS active_users
+FROM
+    activity
+WHERE
+    -- DATE_SUB() 用于从一个日期或时间值中减去指定的时间间隔，从而得到一个新的日期或时间值
+    activity_date BETWEEN DATE_SUB('2019-07-27', INTERVAL 29 DAY) AND '2019-07-27'
+GROUP BY
+    activity_date
+;
 ```
 
 ## 高级查询和连接
@@ -93,6 +155,31 @@ ORDER BY
 ;
 ```
 
+### 1789.员工的直属部门
+``` sql
+-- 上半部分是求 (当员工只加入一个部门的时候，那这个部门将默认为他的直属部门，虽然表记录的值为'N')
+SELECT
+    employee_id, department_id
+FROM
+    Employee
+GROUP BY
+    employee_id
+-- HAVING 是和 GROUP BY 一起用的，只返回符合 HAVING 条件的分组
+-- 即这里只返回只有一个 department_id 的人
+HAVING
+    COUNT(department_id) = 1
+-- UNION 是将两个SELECT数据合成一个结果集一起返回，并会去掉这两堆数据中重复的数据
+UNION
+-- 下半部分是求 (当一个员工加入超过一个部门的时候，他需要决定哪个部门是他的直属部门)
+SELECT
+    employee_id, department_id
+FROM
+    Employee
+WHERE
+    primary_flag = 'Y'
+;
+```
+
 ## 子查询
 ### 1978.上级经理已离职的公司员工
 ``` sql
@@ -106,6 +193,33 @@ AND
     manager_id NOT IN (SELECT employee_id FROM Employees)
 ORDER BY
     employee_id
+```
+
+### 626.换座位
+``` sql
+SELECT
+    -- CASE 就是执行下面符合 WHEN 条件的语句
+    (CASE
+        -- 奇数id且id不等于记录总数，即不是最后一个id，则把 id + 1
+        WHEN MOD(id, 2) != 0 AND counts != id THEN id + 1
+        -- id正好是最后一个id，则不变
+        WHEN MOD(id, 2) != 0 AND counts = id THEN id
+        -- 偶数id，则把 id - 1
+        ELSE id - 1
+    END) AS id,
+    student
+FROM
+    seat,
+    -- 这样操作其实就是把seat表和seat_counts表组合，即seat每行都加一个counts字段，且counts都是一样的，是seat记录总数
+    (SELECT
+        COUNT(*) AS counts
+    FROM
+        seat
+    ) AS seat_counts
+ORDER BY
+    -- ASC 升序
+    id ASC
+;
 ```
 
 ## 高级字符串函数/正则表达式/子句
@@ -125,4 +239,29 @@ FROM
 ORDER BY
     user_id
 ;
+```
+
+### 1527.患某种疾病的患者
+- 正则表达式方法
+``` sql
+SELECT
+    patient_id,
+    patient_name,
+    conditions
+FROM
+    Patients
+WHERE
+    -- REGEXP 正则表达式操作符
+    conditions REGEXP '\\bDIAB1.*'
+;
+```
+
+- 模糊查询
+``` sql
+SELECT 
+    patient_id, patient_name, conditions
+FROM 
+    Patients
+WHERE 
+    conditions LIKE 'DIAB1%' OR conditions LIKE '% DIAB1%';
 ```
