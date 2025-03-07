@@ -23,6 +23,19 @@ WHERE
 ;
 ```
 
+### 595.大的国家
+``` sql
+SELECT
+    name,
+    population,
+    area
+FROM
+    World
+WHERE
+    area >= 3000000 OR population >= 25000000
+;
+```
+
 ## 连接
 ### 1378.使用唯一标识码替换员工ID
 ``` sql
@@ -36,6 +49,24 @@ LEFT JOIN
     EmployeeUNI as b
 ON
     a.id = b.id
+;
+```
+
+### 1581.进店却未进行过交易的顾客
+``` sql
+SELECT
+    customer_id,
+    COUNT(customer_id) AS count_no_trans
+FROM
+    Visits AS v
+LEFT JOIN
+    Transactions AS t
+ON
+    v.visit_id = t.visit_id
+WHERE
+    transaction_id IS NULL
+GROUP BY
+    customer_id
 ;
 ```
 
