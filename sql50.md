@@ -52,6 +52,41 @@ ON
 ;
 ```
 
+### 1068.产品销售分析 I
+``` sql
+SELECT
+    p.product_name, 
+    s.year,
+    s.price
+FROM
+    Product AS p
+-- JOIN 就是，只展示两个表相互匹配的行，不会出现有一个表没有匹配的行就用NULL来替代
+JOIN
+    Sales AS s
+ON
+    s.product_id = p.product_id
+;
+``` 
+
+### 1581.进店却未进行过交易的顾客
+``` sql
+SELECT
+    customer_id,
+    COUNT(customer_id) AS count_no_trans
+FROM
+    Visits AS v
+LEFT JOIN
+    Transactions AS t
+ON
+    v.visit_id = t.visit_id
+WHERE
+    transaction_id IS NULL
+GROUP BY
+    customer_id
+;
+
+``` 
+
 ## 聚合函数
 ### 620.有趣的电影
 ``` sql
@@ -96,6 +131,22 @@ GROUP BY
 ;
 ```
 
+### 1075.项目员工 I
+``` sql
+SELECT
+    project_id,
+    ROUND(AVG(experience_years), 2) AS average_years
+FROM
+    -- 两张表用逗号连接，其实就是隐式内连接，就是两边都不补充NULL
+    Project AS p,
+    Employee AS e
+WHERE
+    p.employee_id = e.employee_id
+GROUP BY
+    project_id
+;
+```
+
 ## 排序和分组
 ### 2356.每位教师所教授的科目种类的数量
 ``` sql
@@ -125,6 +176,25 @@ WHERE
     activity_date BETWEEN DATE_SUB('2019-07-27', INTERVAL 29 DAY) AND '2019-07-27'
 GROUP BY
     activity_date
+;
+```
+
+### 1084.销售分析 III
+``` sql
+-- SELECT 子句中的字段如果两个表都有，必须指定表名，否则无法判断你要哪个表中的字段
+SELECT
+    s.product_id,
+    p.product_name
+FROM
+    Product AS p
+JOIN
+    Sales AS s
+ON
+    p.product_id = s.product_id
+GROUP BY
+    s.product_id
+HAVING 
+    MIN(sale_date) >= '2019-01-01' AND MAX(sale_date) <= '2019-03-31'
 ;
 ```
 
@@ -177,6 +247,22 @@ WHERE
 ;
 ```
 
+### 610.判断三角形
+``` sql
+SELECT
+    x,
+    y,
+    z,
+    -- CASE 满足哪一个条件，就走哪一条
+    CASE
+        WHEN x + y > z AND x + z > y AND y + z > x THEN 'Yes'
+        ELSE 'No'
+    END AS triangle
+FROM
+    triangle
+;
+``` 
+
 ## 子查询
 ### 1978.上级经理已离职的公司员工
 ``` sql
@@ -219,6 +305,49 @@ ORDER BY
 ;
 ```
 
+### 1341.电影评分
+``` sql
+-- 评论电影数量最多且字典序较小的用户名
+(
+    SELECT
+        u.name AS results
+    FROM
+        MovieRating AS mr
+    JOIN
+        Users AS u 
+    ON
+        mr.user_id = u.user_id
+    GROUP BY
+        mr.user_id
+    ORDER BY
+        COUNT(mr.user_id) DESC,
+        u.name
+    LIMIT 1
+)
+-- UNION 是将两个查询的结果合并后去重，而 UNION ALL 则是简单的合并，不会去重
+UNION ALL
+-- 2020年2月份平均评分最高且字典序较小的电影名
+(
+    SELECT
+        m.title AS results
+    FROM
+        MovieRating AS mr
+    JOIN
+        Movies AS m 
+    ON
+        mr.movie_id = m.movie_id
+    WHERE
+        mr.created_at >= '2020-02-01' AND mr.created_at < '2020-03-01'
+    GROUP BY
+        mr.movie_id
+    ORDER BY
+        AVG(mr.rating) DESC,
+        m.title
+    LIMIT 1
+)
+;
+```
+
 ## 高级字符串函数/正则表达式/子句
 ### 1667.修复表中的名字
 ``` sql
@@ -249,7 +378,7 @@ FROM
     Patients
 WHERE
     -- REGEXP 正则表达式操作符
-    conditions REGEXP '\\bDIAB1.*'
+    conditions REGEXP '^DIAB1|\\sDIAB1'
 ;
 ```
 
@@ -262,3 +391,15 @@ FROM
 WHERE 
     conditions LIKE 'DIAB1%' OR conditions LIKE '% DIAB1%';
 ```
+
+### 196.删除重复的电子邮箱
+``` sql
+DELETE
+    p1
+FROM
+    Person p1,
+    Person p2
+WHERE
+    p1.email = p2.email AND p1.id > p2.id
+;
+``` 
