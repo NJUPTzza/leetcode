@@ -36,6 +36,20 @@ WHERE
 ;
 ```
 
+### 1148.文章浏览 I
+``` sql
+SELECT
+    -- DISTINCT 去重
+    DISTINCT author_id AS id 
+FROM
+    Views
+WHERE
+    author_id = viewer_id
+ORDER BY
+    id
+;
+```
+
 ## 连接
 ### 1378.使用唯一标识码替换员工ID
 ``` sql
@@ -86,6 +100,19 @@ GROUP BY
 ;
 
 ``` 
+
+### 197.上升的温度
+``` sql
+SELECT
+    w2.id AS Id
+FROM
+    Weather AS w1,
+    Weather AS w2
+WHERE
+    -- DATEDIFF() 用于计算日期之间的差值
+    DATEDIFF(w2.recordDate, w1.recordDate) = 1 AND w2.temperature > w1.temperature
+;
+```
 
 ## 聚合函数
 ### 620.有趣的电影
@@ -147,6 +174,25 @@ GROUP BY
 ;
 ```
 
+### 1633.各赛事的用户注册率
+``` sql
+SELECT
+    contest_id,
+    -- 注意COUNT()里就算是false也会计数
+    -- 所以如果是两表连接的JOIN写法，然后用COUNT(user_id)，即使Users表中只有3个字段
+    -- 也会按照Register表中的字段数来统计，因为操作的是两表JOIN后的表
+    ROUND(COUNT(user_id) * 100 / (SELECT COUNT(*) FROM Users), 2) AS percentage
+FROM
+    Register 
+GROUP BY
+    contest_id
+ORDER BY
+    -- ASC为升序（默认是升序），DESC是降序
+    percentage DESC,
+    contest_id
+;
+```
+
 ## 排序和分组
 ### 2356.每位教师所教授的科目种类的数量
 ``` sql
@@ -195,6 +241,26 @@ GROUP BY
     s.product_id
 HAVING 
     MIN(sale_date) >= '2019-01-01' AND MAX(sale_date) <= '2019-03-31'
+;
+```
+
+### 596.超过 5 名学生的课
+``` sql
+SELECT
+    class
+FROM
+    -- 这相当于新建一张表
+    -- 表只有class和对应class有几个学生，这两个字段
+    (
+        SELECT
+            class, COUNT(student) AS num
+        FROM   
+            Courses
+        GROUP BY
+            class
+    ) AS c 
+WHERE
+    num >= 5
 ;
 ```
 
@@ -262,6 +328,19 @@ FROM
     triangle
 ;
 ``` 
+
+### 180.连续出现的数字
+``` sql
+SELECT
+    DISTINCT l1.num AS ConsecutiveNums
+FROM
+    Logs AS l1,
+    Logs AS l2,
+    Logs AS l3
+WHERE
+    l1.id = l2.id - 1 AND l2.id = l3.id - 1 AND l1.num = l2.num AND l2.num = l3.num
+;
+```
 
 ## 子查询
 ### 1978.上级经理已离职的公司员工
@@ -347,6 +426,39 @@ UNION ALL
 )
 ;
 ```
+### 1321.餐馆营业额变化增长
+``` sql
+-- 该题本质是新建两张表，最里层的表是每天的消费总额，中间层表为每7天的消费总额
+SELECT
+    visited_on,
+    amount,
+    ROUND(amount / 7, 2) AS average_amount
+FROM
+    -- L表，统计每天及其前6天的消费总额
+    (
+        SELECT
+            visited_on,
+            -- OVER() 表示定义一个窗口，一般跟在一个函数后面，表示函数只处理这一个窗口中的数据
+            -- 下面这句话表示统计每一行及其前面六行，amount的总和
+            -- 如果前面不足六行，就统计足够的最多行数
+            SUM(amount) OVER (ORDER BY visited_on ROWS 6 PRECEDING) AS amount
+        FROM   
+            -- T表，统计每一天的消费总额
+            (
+                SELECT 
+                    visited_on,
+                    SUM(amount) AS amount
+                FROM
+                    Customer
+                GROUP BY
+                    visited_on
+            ) AS T
+    ) AS L
+WHERE
+    -- MIN() 函数返回指定列中的最小值
+    DATEDIFF(visited_on, (SELECT MIN(visited_on) FROM Customer)) >= 6
+;
+```
 
 ## 高级字符串函数/正则表达式/子句
 ### 1667.修复表中的名字
@@ -403,3 +515,23 @@ WHERE
     p1.email = p2.email AND p1.id > p2.id
 ;
 ``` 
+
+### 176.第二高的薪水     
+``` sql
+SELECT
+    -- 不加IFNULL也可以，因为子查询如果没有返回值就会返回NULL
+    IFNULL(
+        (
+            SELECT 
+                DISTINCT salary
+            FROM 
+                Employee
+            ORDER BY
+                salary DESC
+            -- LIMIT 1 只返回一条记录
+            -- OFFSET 1 跳过第一条记录
+            LIMIT 1 OFFSET 1
+        ),
+        NULL
+    ) AS SecondHighestSalary
+```
