@@ -114,6 +114,23 @@ WHERE
 ;
 ```
 
+### 1661.每台机器的进程平均运行时间
+``` sql
+SELECT
+    a1.machine_id,
+    ROUND(AVG(a2.timestamp - a1.timestamp), 3) as processing_time
+FROM 
+-- 用逗号来隐式内连接时，用 WHERE 不用 ON，显式用 JOIN 就得用 ON
+    Activity AS a1
+JOIN
+    Activity AS a2
+ON
+    a1.machine_id = a2.machine_id AND a1.process_id = a2.process_id AND a1.activity_type = 'start' AND a2.activity_type = 'end'
+GROUP BY
+    machine_id
+;
+```
+
 ## 聚合函数
 ### 620.有趣的电影
 ``` sql
@@ -190,6 +207,20 @@ ORDER BY
     -- ASC为升序（默认是升序），DESC是降序
     percentage DESC,
     contest_id
+;
+```
+
+### 1211.查询结果的质量和占比
+``` sql
+SELECT
+    query_name,
+    ROUND(AVG(rating / position), 2) AS quality,
+    -- IF(condition, value_if_true, value_if_false)
+    ROUND(SUM(IF(rating < 3, 1, 0)) * 100/ COUNT(*), 2) AS poor_query_percentage
+FROM
+    Queries
+GROUP BY
+    query_name
 ;
 ```
 
