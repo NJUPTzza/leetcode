@@ -50,6 +50,19 @@ ORDER BY
 ;
 ```
 
+### 1683.无效的推文
+``` sql
+SELECT
+    tweet_id
+FROM
+    Tweets
+WHERE
+    -- CHAR_LENGTH() 返回 字符串中字符的实际个数
+    -- LENGTH() 返回 字符串在存储时所占用的字节数
+    CHAR_LENGTH(content) > 15
+;
+```
+
 ## 连接
 ### 1378.使用唯一标识码替换员工ID
 ``` sql
@@ -128,6 +141,22 @@ ON
     a1.machine_id = a2.machine_id AND a1.process_id = a2.process_id AND a1.activity_type = 'start' AND a2.activity_type = 'end'
 GROUP BY
     machine_id
+;
+```
+
+### 577.员工奖金
+``` sql
+SELECT
+    e.name,
+    b.bonus
+FROM
+    Employee AS e
+LEFT JOIN
+    Bonus AS b
+ON
+    e.empId = b.empId
+WHERE
+    b.bonus < 1000 OR b.bonus IS NULL
 ;
 ```
 
